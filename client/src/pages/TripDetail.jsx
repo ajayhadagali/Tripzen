@@ -71,7 +71,7 @@ export default function TripDetail() {
           </div>
         )}
         {activeTab === 'Places' && <PlacesExplorer destination={trip.destination} />}
-        {activeTab === 'Expenses' && <ExpensesTab members={trip.members} />}
+        {activeTab === 'Expenses' && <ExpensesTab tripId={trip.id} members={trip.members} />}
         {activeTab === 'Itinerary' && <ItineraryTab />}
       </div>
     </div>

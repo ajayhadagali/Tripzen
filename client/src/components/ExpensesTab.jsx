@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, ArrowRightLeft } from 'lucide-react';
+import { getExpenses, addExpense } from '../mockStore';
+import AddExpenseModal from './AddExpenseModal';
+import SettlementView from './SettlementView';
 
-const mockExpenses = [
-  { id: 1, title: 'Hotel booking', amount: 4000, paidBy: 'Alice' },
-  { id: 2, title: 'Dinner', amount: 1200, paidBy: 'Bob' },
-  { id: 3, title: 'Cab', amount: 800, paidBy: 'Carol' },
-];
+export default function ExpensesTab({ tripId, members }) {
+  const [expenses, setExpenses] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showSettle, setShowSettle] = useState(false);
 
-export default function ExpensesTab({ members }) {
-  const [expenses] = useState(mockExpenses);
+  useEffect(() => {
+    setExpenses(getExpenses(tripId));
+  }, [tripId]);
+
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const perHead = Math.round(total / members.length);
+  const perHead = members.length ? Math.round(total / members.length) : 0;
+
+  const handleAdd = (expense) => {
+    addExpense(tripId, expense);
+    setExpenses(getExpenses(tripId));
+  };
 
   return (
     <div>
@@ -28,20 +37,43 @@ export default function ExpensesTab({ members }) {
       <div className="section-title">
         <h3>All expenses</h3>
       </div>
+
+      {expenses.length === 0 && <p style={{ marginBottom: 16 }}>No expenses logged yet.</p>}
+
       {expenses.map((e) => (
         <div key={e.id} className="expense-row">
           <div>
             <div style={{ fontWeight: 600 }}>{e.title}</div>
-            <div className="who">paid by {e.paidBy}</div>
+            <div className="who">paid by {e.paidBy} · split among {e.splitAmong.length}</div>
           </div>
           <div className="amt">₹{e.amount}</div>
         </div>
       ))}
 
       <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-        <button className="btn btn-primary"><Plus size={16} /> Add expense</button>
-        <button className="btn btn-secondary"><ArrowRightLeft size={16} /> View settlement</button>
+        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
+          <Plus size={16} /> Add expense
+        </button>
+        <button className="btn btn-secondary" onClick={() => setShowSettle(true)}>
+          <ArrowRightLeft size={16} /> View settlement
+        </button>
       </div>
+
+      {showAdd && (
+        <AddExpenseModal
+          members={members}
+          onClose={() => setShowAdd(false)}
+          onAdd={handleAdd}
+        />
+      )}
+
+      {showSettle && (
+        <SettlementView
+          expenses={expenses}
+          members={members}
+          onClose={() => setShowSettle(false)}
+        />
+      )}
     </div>
   );
 }

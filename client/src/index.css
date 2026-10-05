@@ -361,3 +361,65 @@ button { font-family: 'Inter', sans-serif; }
 }
 .expense-row .who { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
 .expense-row .amt { font-family: 'Fraunces', serif; font-size: 18px; }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16,27,45,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.modal-box {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-soft);
+  padding: 4px;
+}
+.field select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-size: 15px;
+  background: var(--surface);
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.chip.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+.settle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.settle-row .who { font-weight: 600; }
+.settle-amt { margin-left: auto; font-family: 'Fraunces', serif; font-size: 18px; color: var(--coral-dark); }
