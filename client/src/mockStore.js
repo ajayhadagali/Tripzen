@@ -56,3 +56,43 @@ export function addExpense(tripId, expense) {
   localStorage.setItem(EXPENSE_KEY, JSON.stringify(all));
   return newExpense;
 }
+const ITINERARY_KEY = 'tripzen_itinerary';
+
+const seedItinerary = {
+  '1': [
+    { id: 'd1', day: 'Day 1', activities: ['Arrival & check-in', 'Baga Beach sunset'] },
+    { id: 'd2', day: 'Day 2', activities: ['Fort Aguada visit', 'Anjuna market shopping'] },
+  ],
+};
+
+function getAllItineraries() {
+  const raw = localStorage.getItem(ITINERARY_KEY);
+  if (!raw) {
+    localStorage.setItem(ITINERARY_KEY, JSON.stringify(seedItinerary));
+    return seedItinerary;
+  }
+  return JSON.parse(raw);
+}
+
+export function getItinerary(tripId) {
+  const all = getAllItineraries();
+  return all[tripId] || [];
+}
+
+export function addDay(tripId, dayLabel) {
+  const all = getAllItineraries();
+  const existing = all[tripId] || [];
+  const newDay = { id: 'd' + Date.now(), day: dayLabel, activities: [] };
+  all[tripId] = [...existing, newDay];
+  localStorage.setItem(ITINERARY_KEY, JSON.stringify(all));
+  return newDay;
+}
+
+export function addActivity(tripId, dayId, activityText) {
+  const all = getAllItineraries();
+  const days = all[tripId] || [];
+  all[tripId] = days.map((d) =>
+    d.id === dayId ? { ...d, activities: [...d.activities, activityText] } : d
+  );
+  localStorage.setItem(ITINERARY_KEY, JSON.stringify(all));
+}
