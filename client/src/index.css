@@ -104,51 +104,119 @@ button { font-family: 'Inter', sans-serif; }
 .switch-line { margin-top: 22px; font-size: 14px; }
 .switch-line a { color: var(--teal); font-weight: 600; text-decoration: none; }
 
-/* The decorative "dusk horizon" scene */
+/* ---------- Travel scene (login/register illustration) ---------- */
 .auth-scene {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #16213A 0%, #3A2E52 45%, #D9674A 75%, #F2A65A 100%);
+  background: linear-gradient(180deg, #0D1526 0%, #241A3D 30%, #6B3A52 58%, #D9674A 80%, #F2A65A 100%);
 }
+
+.stars {
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 2px;
+  background: transparent;
+  border-radius: 50%;
+  opacity: 0.85;
+  z-index: 1;
+  box-shadow:
+    30px 40px white, 80px 20px white, 120px 70px white, 160px 30px white,
+    200px 90px white, 240px 15px white, 40px 110px white, 280px 50px white,
+    320px 100px white, 90px 140px white, 180px 130px white, 260px 10px white,
+    10px 170px white, 340px 20px white, 360px 160px white, 60px 190px white,
+    220px 180px white, 300px 170px white;
+}
+
+.cloud {
+  position: absolute;
+  background: rgba(255,255,255,0.16);
+  border-radius: 50%;
+  filter: blur(14px);
+  z-index: 2;
+}
+.cloud-1 { width: 140px; height: 50px; top: 12%; left: 8%; }
+.cloud-2 { width: 100px; height: 40px; top: 20%; right: 12%; }
+
 .auth-scene .sun {
   position: absolute;
-  left: 50%;
-  top: 58%;
-  width: 180px;
-  height: 180px;
+  left: 50%; top: 58%;
+  width: 180px; height: 180px;
   background: radial-gradient(circle, #FFE8B8 0%, #FFB96B 60%, transparent 72%);
   border-radius: 50%;
   transform: translate(-50%, -50%);
+  z-index: 3;
 }
-.auth-scene .horizon-line {
+
+.flight-svg {
   position: absolute;
-  left: 0; right: 0; top: 78%;
-  height: 1px;
-  background: rgba(255,255,255,0.25);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
 }
-.auth-scene .flight-path {
+
+.plane-wrap {
   position: absolute;
-  left: 10%;
-  top: 30%;
-  width: 80%;
-  height: 40%;
-  border: none;
+  z-index: 5;
+  animation: flyPath 9s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.3));
 }
-.auth-scene .scene-copy {
+@keyframes flyPath {
+  0%   { top: 15%; left: 10%; transform: rotate(35deg); opacity: 0; }
+  10%  { opacity: 1; }
+  30%  { top: 32%; left: 40%; transform: rotate(70deg); }
+  55%  { top: 48%; left: 38%; transform: rotate(125deg); }
+  80%  { top: 68%; left: 78%; transform: rotate(50deg); }
+  92%  { opacity: 1; }
+  100% { top: 74%; left: 86%; transform: rotate(50deg); opacity: 0; }
+}
+
+.mountain {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+}
+.mountain-back {
+  height: 38%;
+  background: rgba(13, 21, 38, 0.5);
+  clip-path: polygon(0% 100%, 0% 55%, 15% 70%, 30% 40%, 45% 65%, 60% 35%, 75% 60%, 90% 45%, 100% 65%, 100% 100%);
+  z-index: 6;
+}
+.mountain-front {
+  height: 26%;
+  background: rgba(13, 21, 38, 0.85);
+  clip-path: polygon(0% 100%, 0% 70%, 12% 50%, 25% 75%, 40% 45%, 55% 72%, 70% 50%, 85% 68%, 100% 55%, 100% 100%);
+  z-index: 7;
+}
+
+.scene-copy {
   position: absolute;
   bottom: 48px;
   left: 48px;
   right: 48px;
   color: white;
+  z-index: 10;
 }
-.auth-scene .scene-copy h3 {
+.scene-copy h3 {
   color: white;
   font-size: 26px;
   font-style: italic;
   font-weight: 500;
   line-height: 1.3;
+  margin-top: 14px;
 }
-.auth-scene .scene-copy p { color: rgba(255,255,255,0.75); margin-top: 10px; font-size: 14px; }
+.scene-copy p { color: rgba(255,255,255,0.75); margin-top: 10px; font-size: 14px; }
+
+/* ---------- Input icons ---------- */
+.input-icon-wrap { position: relative; }
+.input-icon-wrap svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+.input-icon-wrap input { padding-left: 42px; }
 
 /* ---------- Dashboard ---------- */
 .page { max-width: 1040px; margin: 0 auto; padding: 36px 24px 80px; }

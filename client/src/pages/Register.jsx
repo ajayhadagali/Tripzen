@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import { MapPin, User, Mail, Lock } from 'lucide-react';
+import TravelScene from '../components/TravelScene';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -31,15 +32,24 @@ export default function Register() {
           <form onSubmit={handleSubmit}>
             <div className="field">
               <label>Name</label>
-              <input name="name" placeholder="Your name" value={form.name} onChange={handleChange} />
+              <div className="input-icon-wrap">
+                <User size={16} />
+                <input name="name" placeholder="Your name" value={form.name} onChange={handleChange} />
+              </div>
             </div>
             <div className="field">
               <label>Email</label>
-              <input name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} />
+              <div className="input-icon-wrap">
+                <Mail size={16} />
+                <input name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} />
+              </div>
             </div>
             <div className="field">
               <label>Password</label>
-              <input name="password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} />
+              <div className="input-icon-wrap">
+                <Lock size={16} />
+                <input name="password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} />
+              </div>
             </div>
             <button type="submit" className="btn btn-primary btn-block">Create account</button>
           </form>
@@ -48,15 +58,11 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="auth-scene">
-        <div className="sun" />
-        <div className="horizon-line" />
-        <div className="scene-copy">
-          <MapPin color="white" size={28} />
-          <h3 style={{ marginTop: 14 }}>"Wherever you're headed, plan it together."</h3>
-          <p>Hotels, attractions, and shared expenses — all in one itinerary.</p>
-        </div>
-      </div>
+      <TravelScene
+        icon={MapPin}
+        quote="Wherever you're headed, plan it together."
+        subtext="Hotels, attractions, and shared expenses — all in one itinerary."
+      />
     </div>
   );
 }
