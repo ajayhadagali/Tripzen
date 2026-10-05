@@ -1,17 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Compass, MapPinned, Wallet, CalendarDays } from 'lucide-react';
+import { getTripById } from '../mockStore';
 import PlacesExplorer from '../components/PlacesExplorer';
 import ExpensesTab from '../components/ExpensesTab';
 import ItineraryTab from '../components/ItineraryTab';
-
-const mockTrip = {
-  id: 1,
-  name: 'Goa Trip',
-  destination: 'Goa',
-  dates: '12-15 Dec',
-  members: ['Alice', 'Bob', 'Carol', 'Dave'],
-};
 
 const TABS = [
   { key: 'Overview', icon: Compass },
@@ -24,7 +17,23 @@ export default function TripDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Overview');
-  const trip = mockTrip;
+  const [trip, setTrip] = useState(null);
+
+  useEffect(() => {
+    setTrip(getTripById(id));
+    setActiveTab('Overview'); // reset tab when switching trips
+  }, [id]);
+
+  if (!trip) {
+    return (
+      <div className="page">
+        <button onClick={() => navigate('/dashboard')} className="back-link">
+          <ArrowLeft size={15} /> Back to trips
+        </button>
+        <p>Trip not found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="page">

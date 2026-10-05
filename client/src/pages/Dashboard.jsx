@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { LogOut, Plus, Users } from 'lucide-react';
-
-const mockTrips = [
-  { id: 1, name: 'Goa Trip', destination: 'Goa', members: 4, dates: '12-15 Dec' },
-  { id: 2, name: 'Manali Trek', destination: 'Manali', members: 5, dates: '20-25 Dec' },
-];
+import { getTrips } from '../mockStore';
 
 export default function Dashboard() {
-  const [trips] = useState(mockTrips);
+  const [trips, setTrips] = useState([]);
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  useEffect(() => {
+    setTrips(getTrips());
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -49,7 +49,7 @@ export default function Dashboard() {
             </div>
             <div className="ticket-perf" />
             <div className="ticket-bottom">
-              <span className="badge"><Users size={12} style={{ marginRight: 4, verticalAlign: -2 }} />{trip.members} members</span>
+              <span className="badge"><Users size={12} style={{ marginRight: 4, verticalAlign: -2 }} />{trip.members.length} members</span>
               <span>View trip →</span>
             </div>
           </div>
