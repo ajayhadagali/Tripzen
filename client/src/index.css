@@ -58,8 +58,12 @@ button { font-family: 'Inter', sans-serif; }
   min-height: 100vh;
 }
 @media (max-width: 860px) {
-  .auth-wrap { grid-template-columns: 1fr; }
-  .auth-scene { display: none; }
+  .auth-wrap { grid-template-columns: 1fr; grid-template-rows: 220px 1fr; }
+  .auth-scene { order: -1; }
+  .scene-copy { bottom: 20px; left: 24px; right: 24px; }
+  .scene-copy h3 { font-size: 18px; margin-top: 0; }
+  .scene-copy p, .scene-copy svg { display: none; }
+  .auth-form-side { padding: 28px 20px; align-items: flex-start; }
 }
 
 .auth-form-side {
@@ -491,3 +495,16 @@ button { font-family: 'Inter', sans-serif; }
 }
 .settle-row .who { font-weight: 600; }
 .settle-amt { margin-left: auto; font-family: 'Fraunces', serif; font-size: 18px; color: var(--coral-dark); }
+/* Phone-friendly layout for the rest of the app */
+@media (max-width: 640px) {
+  .page { padding: 24px 16px 60px; }
+  .page-header h2 { font-size: 26px; }
+  .stat-strip { flex-direction: column; }
+  .pill-tabs { display: flex; overflow-x: auto; max-width: 100%; }
+  .pill-tab { white-space: nowrap; }
+  .ticket-grid { grid-template-columns: 1fr; }
+  .modal-box { padding: 22px; }
+}
+
+/* Keep content clear of the phone's status bar / notch */
+body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
