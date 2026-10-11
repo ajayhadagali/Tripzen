@@ -1,34 +1,54 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { getItinerary, addDay, addActivity } from '../mockStore';
+import api from '../api';
 import AddDayModal from './AddDayModal';
 import AddActivityModal from './AddActivityModal';
 
 export default function ItineraryTab({ tripId }) {
   const [days, setDays] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showAddDay, setShowAddDay] = useState(false);
-  const [activeDayForActivity, setActiveDayForActivity] = useState(null);
+  const [activeDay, setActiveDay] = useState(null);
 
-  useEffect(() => {
-    setDays(getItinerary(tripId));
-  }, [tripId]);
-
-  const handleAddDay = (dayLabel) => {
-    addDay(tripId, dayLabel);
-    setDays(getItinerary(tripId));
+  const loadDays = async () => {
+    try {
+      const { data } = await api.get(`/itinerary/${tripId}`);
+      setDays(data);
+      setError('');
+    } catch {
+      setError('Could not load the itinerary. Is the server running?');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddActivity = (text) => {
-    addActivity(tripId, activeDayForActivity.id, text);
-    setDays(getItinerary(tripId));
+  useEffect(() => {
+    setLoading(true);
+    loadDays();
+  }, [tripId]);
+
+  // These throw on failure so the modals can show the server's message
+  const handleAddDay = async (dayLabel) => {
+    await api.post(`/itinerary/${tripId}`, { day: dayLabel });
+    await loadDays();
+  };
+
+  const handleAddActivity = async (text) => {
+    await api.post(`/itinerary/${tripId}/${activeDay._id}/activities`, { text });
+    await loadDays();
   };
 
   return (
     <div>
-      {days.length === 0 && <p style={{ marginBottom: 16 }}>No itinerary yet — add your first day.</p>}
+      {loading && <p>Loading itinerary...</p>}
+      {error && <p className="error-text">{error}</p>}
+      {!loading && !error && days.length === 0 && (
+        <p style={{ marginBottom: 16 }}>No itinerary yet. Add your first day.</p>
+      )}
 
       {days.map((d) => (
-        <div key={d.id} className="place-tile" style={{ marginBottom: 14 }}>
+        <div key={d._id} className="place-tile" style={{ marginBottom: 14 }}>
           <span className="tag">{d.day}</span>
           {d.activities.length > 0 && (
             <ul style={{ margin: '8px 0 0', paddingLeft: 18, color: 'var(--ink-soft)' }}>
@@ -38,7 +58,7 @@ export default function ItineraryTab({ tripId }) {
           <button
             className="btn btn-ghost"
             style={{ marginTop: 10, padding: '6px 12px', fontSize: 13 }}
-            onClick={() => setActiveDayForActivity(d)}
+            onClick={() => setActiveDay(d)}
           >
             <Plus size={14} /> Add activity
           </button>
@@ -53,10 +73,10 @@ export default function ItineraryTab({ tripId }) {
         <AddDayModal onClose={() => setShowAddDay(false)} onAdd={handleAddDay} />
       )}
 
-      {activeDayForActivity && (
+      {activeDay && (
         <AddActivityModal
-          dayLabel={activeDayForActivity.day}
-          onClose={() => setActiveDayForActivity(null)}
+          dayLabel={activeDay.day}
+          onClose={() => setActiveDay(null)}
           onAdd={handleAddActivity}
         />
       )}
