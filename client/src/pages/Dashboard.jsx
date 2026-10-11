@@ -1,19 +1,25 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { LogOut, Plus, Users } from 'lucide-react';
-import { getTrips } from '../mockStore';
+import api from '../api';
 
 export default function Dashboard() {
   const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
-    setTrips(getTrips());
+    api.get('/trips')
+      .then(({ data }) => setTrips(data.map((t) => ({ ...t, id: t._id }))))
+      .catch(() => setError('Could not load trips. Is the server running?'))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
@@ -32,6 +38,9 @@ export default function Dashboard() {
       <div className="section-title">
         <h3>Your trips</h3>
       </div>
+
+      {loading && <p>Loading your trips...</p>}
+      {error && <p className="error-text">{error}</p>}
 
       <div className="ticket-grid">
         {trips.map((trip) => (

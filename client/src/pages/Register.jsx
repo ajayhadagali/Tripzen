@@ -2,23 +2,34 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { MapPin, User, Mail, Lock } from 'lucide-react';
 import TravelScene from '../components/TravelScene';
+import api from '../api';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.password) {
       setError('All fields are required');
       return;
     }
-    localStorage.setItem('token', 'mock-token-123');
-    localStorage.setItem('user', JSON.stringify({ name: form.name, email: form.email }));
-    navigate('/dashboard');
+    setError('');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/register', form);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Cannot reach the server. Is it running?');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,13 +56,15 @@ export default function Register() {
               </div>
             </div>
             <div className="field">
-              <label>Password</label>
+              <label>Password (min 6 characters)</label>
               <div className="input-icon-wrap">
                 <Lock size={16} />
                 <input name="password" type="password" placeholder="••••••••" value={form.password} onChange={handleChange} />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Create account</button>
+            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+              {loading ? 'Creating account...' : 'Create account'}
+            </button>
           </form>
           {error && <p className="error-text">{error}</p>}
           <p className="switch-line">Already have an account? <Link to="/login">Log in</Link></p>
@@ -60,7 +73,7 @@ export default function Register() {
 
       <TravelScene
         icon={MapPin}
-        quote="Wherever you're headed, plan it together."
+        quote={'"Wherever you\'re headed, plan it together."'}
         subtext="Hotels, attractions, and shared expenses — all in one itinerary."
       />
     </div>

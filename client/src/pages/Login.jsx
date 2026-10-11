@@ -2,23 +2,34 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Compass, Mail, Lock } from 'lucide-react';
 import TravelScene from '../components/TravelScene';
+import api from '../api';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
       setError('Please fill in both fields');
       return;
     }
-    localStorage.setItem('token', 'mock-token-123');
-    localStorage.setItem('user', JSON.stringify({ name: 'Test User', email: form.email }));
-    navigate('/dashboard');
+    setError('');
+    setLoading(true);
+    try {
+      const { data } = await api.post('/auth/login', form);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Cannot reach the server. Is it running?');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,7 +57,9 @@ export default function Login() {
                   value={form.password} onChange={handleChange} />
               </div>
             </div>
-            <button type="submit" className="btn btn-primary btn-block">Log in</button>
+            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+              {loading ? 'Logging in...' : 'Log in'}
+            </button>
           </form>
           {error && <p className="error-text">{error}</p>}
           <p className="switch-line">New here? <Link to="/register">Create an account</Link></p>
