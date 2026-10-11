@@ -6,6 +6,8 @@ export default function AddExpenseModal({ members, onClose, onAdd }) {
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState(members[0]);
   const [splitAmong, setSplitAmong] = useState([...members]);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const toggleMember = (m) => {
     setSplitAmong((prev) =>
@@ -13,11 +15,21 @@ export default function AddExpenseModal({ members, onClose, onAdd }) {
     );
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title || !amount || splitAmong.length === 0) return;
-    onAdd({ title, amount: parseFloat(amount), paidBy, splitAmong });
-    onClose();
+    if (!title.trim() || !amount || splitAmong.length === 0) {
+      setError('Fill in all fields and select at least one person to split with');
+      return;
+    }
+    setError('');
+    setSaving(true);
+    try {
+      await onAdd({ title: title.trim(), amount: parseFloat(amount), paidBy, splitAmong });
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not save the expense');
+      setSaving(false);
+    }
   };
 
   return (
@@ -64,7 +76,10 @@ export default function AddExpenseModal({ members, onClose, onAdd }) {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary btn-block">Add expense</button>
+          <button type="submit" className="btn btn-primary btn-block" disabled={saving}>
+            {saving ? 'Saving...' : 'Add expense'}
+          </button>
+          {error && <p className="error-text">{error}</p>}
         </form>
       </div>
     </div>

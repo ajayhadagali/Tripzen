@@ -1,24 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Plus, ArrowRightLeft } from 'lucide-react';
-import { getExpenses, addExpense } from '../mockStore';
+import api from '../api';
 import AddExpenseModal from './AddExpenseModal';
 import SettlementView from './SettlementView';
 
 export default function ExpensesTab({ tripId, members }) {
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
 
+  const loadExpenses = async () => {
+    try {
+      const { data } = await api.get(`/expenses/${tripId}`);
+      setExpenses(data);
+      setError('');
+    } catch {
+      setError('Could not load expenses. Is the server running?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setExpenses(getExpenses(tripId));
+    setLoading(true);
+    loadExpenses();
   }, [tripId]);
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const perHead = members.length ? Math.round(total / members.length) : 0;
 
-  const handleAdd = (expense) => {
-    addExpense(tripId, expense);
-    setExpenses(getExpenses(tripId));
+  // Throws on failure so the modal can show the error
+  const handleAdd = async (expense) => {
+    await api.post(`/expenses/${tripId}`, expense);
+    await loadExpenses();
   };
 
   return (
@@ -38,10 +54,14 @@ export default function ExpensesTab({ tripId, members }) {
         <h3>All expenses</h3>
       </div>
 
-      {expenses.length === 0 && <p style={{ marginBottom: 16 }}>No expenses logged yet.</p>}
+      {loading && <p>Loading expenses...</p>}
+      {error && <p className="error-text">{error}</p>}
+      {!loading && !error && expenses.length === 0 && (
+        <p style={{ marginBottom: 16 }}>No expenses logged yet.</p>
+      )}
 
       {expenses.map((e) => (
-        <div key={e.id} className="expense-row">
+        <div key={e._id} className="expense-row">
           <div>
             <div style={{ fontWeight: 600 }}>{e.title}</div>
             <div className="who">paid by {e.paidBy} · split among {e.splitAmong.length}</div>
@@ -68,11 +88,7 @@ export default function ExpensesTab({ tripId, members }) {
       )}
 
       {showSettle && (
-        <SettlementView
-          expenses={expenses}
-          members={members}
-          onClose={() => setShowSettle(false)}
-        />
+        <SettlementView tripId={tripId} onClose={() => setShowSettle(false)} />
       )}
     </div>
   );
