@@ -3,14 +3,13 @@ import { ExternalLink } from 'lucide-react';
 
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
+  'https://lz4.overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
 ];
 
 const label = (s) => (s ? s.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()) : 'Place');
 
-// Gives up on a request after `ms` so the page never hangs forever
-async function fetchWithTimeout(url, options = {}, ms = 12000) {
+async function fetchWithTimeout(url, options = {}, ms = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
@@ -20,12 +19,12 @@ async function fetchWithTimeout(url, options = {}, ms = 12000) {
   }
 }
 
-function parsePlaces(elements) {
+function parseOverpassPlaces(elements = []) {
   const seen = new Set();
   return elements
     .filter((e) => e.tags && e.tags.name)
     .map((e) => ({
-      id: e.type + e.id,
+      id: String(e.type) + e.id,
       name: e.tags.name,
       kind: label(e.tags.tourism || e.tags.historic || e.tags.amenity),
       stars: e.tags.stars,
@@ -34,6 +33,41 @@ function parsePlaces(elements) {
       lon: e.lon ?? e.center?.lon,
     }))
     .filter((p) => p.lat && p.lon)
+    .filter((p) => {
+      const key = p.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 12);
+}
+
+// Fast and reliable fallback using OpenStreetMap Nominatim directly
+async function fetchNominatimPlaces(query) {
+  const res = await fetchWithTimeout(
+    `https://nominatim.openstreetmap.org/search?format=json&limit=15&addressdetails=1&q=${encodeURIComponent(query)}`,
+    {},
+    8000
+  );
+  if (!res.ok) throw new Error('Nominatim search failed');
+  const items = await res.json();
+  const seen = new Set();
+
+  return items
+    .map((item) => {
+      const parts = (item.display_name || '').split(',');
+      const name = item.name || parts[0]?.trim();
+      const address = parts.slice(1, 3).join(',').trim();
+      return {
+        id: String(item.place_id),
+        name,
+        kind: label(item.type || item.class),
+        stars: null,
+        address,
+        lat: item.lat,
+        lon: item.lon,
+      };
+    })
     .filter((p) => {
       const key = p.name.toLowerCase();
       if (seen.has(key)) return false;
@@ -54,12 +88,12 @@ async function runOverpass(query) {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: 'data=' + encodeURIComponent(query),
         },
-        15000
+        7000
       );
       if (!res.ok) throw new Error('Overpass error ' + res.status);
       return await res.json();
     } catch (err) {
-      lastError = err; // try the next server
+      lastError = err;
     }
   }
   throw lastError;
@@ -70,30 +104,47 @@ async function loadPlaces(destination) {
   const cached = localStorage.getItem(cacheKey);
   if (cached) return JSON.parse(cached);
 
-  const geoRes = await fetchWithTimeout(
-    'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' +
-      encodeURIComponent(destination),
-    {},
-    10000
-  );
-  const geo = await geoRes.json();
-  if (!geo.length) throw new Error('Destination not found');
-  const { lat, lon } = geo[0];
+  // 1. Try Overpass spatial query first
+  try {
+    const geoRes = await fetchWithTimeout(
+      'https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(destination),
+      {},
+      6000
+    );
+    const geo = await geoRes.json();
+    if (!geo.length) throw new Error('Destination not found');
+    const { lat, lon } = geo[0];
 
-  const hotelsQuery = `[out:json][timeout:12];nwr["tourism"~"hotel|guest_house|hostel|resort|apartment"]["name"](around:8000,${lat},${lon});out center 30;`;
-  const attractionsQuery = `[out:json][timeout:12];(nwr["tourism"~"attraction|viewpoint|museum|theme_park|zoo"]["name"](around:15000,${lat},${lon});nwr["historic"]["name"](around:15000,${lat},${lon}););out center 30;`;
+    const hotelsQuery = `[out:json][timeout:8];node["tourism"~"hotel|guest_house|hostel|resort"]["name"](around:5000,${lat},${lon});out 25;`;
+    const attractionsQuery = `[out:json][timeout:8];(node["tourism"~"attraction|museum|viewpoint"]["name"](around:7000,${lat},${lon});node["historic"]["name"](around:7000,${lat},${lon}););out 25;`;
 
-  const hotelsData = await runOverpass(hotelsQuery);
-  const attractionsData = await runOverpass(attractionsQuery);
+    const hotelsData = await runOverpass(hotelsQuery);
+    const attractionsData = await runOverpass(attractionsQuery);
 
-  const result = {
-    hotels: parsePlaces(hotelsData.elements),
-    attractions: parsePlaces(attractionsData.elements),
-  };
-  if (result.hotels.length || result.attractions.length) {
-    localStorage.setItem(cacheKey, JSON.stringify(result));
+    const result = {
+      hotels: parseOverpassPlaces(hotelsData?.elements),
+      attractions: parseOverpassPlaces(attractionsData?.elements),
+    };
+
+    if (result.hotels.length || result.attractions.length) {
+      localStorage.setItem(cacheKey, JSON.stringify(result));
+      return result;
+    }
+  } catch (err) {
+    console.warn('Overpass busy or timed out, using Nominatim fallback:', err.message);
   }
-  return result;
+
+  // 2. Reliable Fallback via Nominatim Search (guaranteed to respond)
+  const [hotels, attractions] = await Promise.all([
+    fetchNominatimPlaces(`hotels in ${destination}`),
+    fetchNominatimPlaces(`attractions in ${destination}`),
+  ]);
+
+  const fallbackResult = { hotels, attractions };
+  if (hotels.length || attractions.length) {
+    localStorage.setItem(cacheKey, JSON.stringify(fallbackResult));
+  }
+  return fallbackResult;
 }
 
 export default function PlacesExplorer({ destination }) {
