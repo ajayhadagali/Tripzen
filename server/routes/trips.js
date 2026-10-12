@@ -1,5 +1,7 @@
 const express = require('express');
 const Trip = require('../models/Trip');
+const Expense = require('../models/Expense');
+const Itinerary = require('../models/Itinerary');
 const auth = require('../middleware/auth');
 const tripAccess = require('../middleware/tripAccess');
 
@@ -35,6 +37,18 @@ router.post('/', auth, async (req, res) => {
       createdBy: req.userId,
     });
     res.status(201).json(trip);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/trips/:tripId: removes the trip and everything inside it
+router.delete('/:tripId', auth, tripAccess, async (req, res) => {
+  try {
+    await Expense.deleteMany({ tripId: req.trip._id });
+    await Itinerary.deleteMany({ tripId: req.trip._id });
+    await req.trip.deleteOne();
+    res.json({ message: 'Trip deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

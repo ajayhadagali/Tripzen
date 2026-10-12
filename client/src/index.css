@@ -508,3 +508,34 @@ button { font-family: 'Inter', sans-serif; }
 
 /* Keep content clear of the phone's status bar / notch */
 body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+.place-tile .addr { font-size: 13px; margin-top: 4px; }
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--teal);
+  text-decoration: none;
+}
+.map-link:hover { text-decoration: underline; }
+.ticket-top { position: relative; }
+.ticket-delete {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255,255,255,0.7);
+  border: none;
+  border-radius: 8px;
+  padding: 7px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  display: flex;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ticket-delete:hover { background: white; color: var(--coral-dark); }
+
+.btn-danger { background: var(--coral-dark); color: white; }
+.btn-danger:hover { background: #c8431f; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
