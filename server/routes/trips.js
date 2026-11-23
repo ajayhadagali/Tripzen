@@ -61,15 +61,14 @@ router.post('/', auth, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-// PATCH /api/trips/:tripId/members: update the trip's member list
-router.patch('/:tripId/members', auth, tripAccess, async (req, res) => {
+// PUT /api/trips/:tripId/members: update the trip's member list
+router.put('/:tripId/members', auth, tripAccess, async (req, res) => {
   try {
     const { members } = req.body;
     if (!Array.isArray(members)) {
       return res.status(400).json({ message: 'Members must be an array' });
     }
 
-    // Trim whitespace, remove empty entries, and remove duplicates
     const cleaned = [...new Set(
       members
         .map((m) => (typeof m === 'string' ? m.trim() : ''))
@@ -80,9 +79,13 @@ router.patch('/:tripId/members', auth, tripAccess, async (req, res) => {
       return res.status(400).json({ message: 'A trip must have at least one member' });
     }
 
-    req.trip.members = cleaned;
-    await req.trip.save();
-    res.json(req.trip);
+    const updatedTrip = await Trip.findByIdAndUpdate(
+      req.trip._id,
+      { $set: { members: cleaned } },
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedTrip);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

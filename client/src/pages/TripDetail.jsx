@@ -82,15 +82,23 @@ export default function TripDetail() {
   };
 
   const handleSaveMembers = async () => {
+    const pending = newMember.trim();
+    const finalMembers =
+      pending && !draftMembers.some((m) => m.toLowerCase() === pending.toLowerCase())
+        ? [...draftMembers, pending]
+        : draftMembers;
+
     setSavingMembers(true);
     setMemberError('');
     try {
-      const { data } = await api.patch(`/trips/${trip.id}/members`, {
-        members: draftMembers,
+      const { data } = await api.put(`/trips/${trip.id}/members`, {
+        members: finalMembers,
       });
       setTrip({ ...data, id: data._id });
+      setNewMember('');
       setIsEditingMembers(false);
     } catch (err) {
+      console.error('Save members failed:', err.response || err);
       setMemberError(err.response?.data?.message || 'Failed to update members');
     } finally {
       setSavingMembers(false);
