@@ -10,24 +10,41 @@ export default function NewTrip() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const next = { ...form, [name]: value };
+    // If the start date moves past the chosen end date, clear the end date
+    if (name === 'startDate' && next.endDate && value > next.endDate) next.endDate = '';
+    setForm(next);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.destination) {
+    if (!form.name.trim() || !form.destination.trim()) {
       setError('Trip name and destination are required');
+      return;
+    }
+    if ((form.startDate && !form.endDate) || (!form.startDate && form.endDate)) {
+      setError('Enter both a start date and an end date, or leave both empty');
+      return;
+    }
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      setError('End date cannot be before the start date');
       return;
     }
     setError('');
     setLoading(true);
 
     const memberList = form.members.split(',').map((m) => m.trim()).filter(Boolean);
+    const hasDates = form.startDate && form.endDate;
 
     try {
       await api.post('/trips', {
-        name: form.name,
-        destination: form.destination,
-        dates: form.startDate && form.endDate ? `${form.startDate} to ${form.endDate}` : 'Dates TBD',
+        name: form.name.trim(),
+        destination: form.destination.trim(),
+        startDate: form.startDate,
+        endDate: form.endDate,
+        dates: hasDates ? `${form.startDate} to ${form.endDate}` : 'Dates TBD',
         members: memberList.length ? memberList : ['You'],
       });
       navigate('/dashboard');
@@ -50,15 +67,17 @@ export default function NewTrip() {
           </div>
           <div className="field">
             <label>Destination</label>
-            <input name="destination" placeholder="e.g. Goa" value={form.destination} onChange={handleChange} />
+            <input name="destination" placeholder="e.g. Panaji" value={form.destination} onChange={handleChange} />
           </div>
           <div className="field">
             <label>Start date</label>
-            <input name="startDate" type="date" value={form.startDate} onChange={handleChange} />
+            <input name="startDate" type="date" value={form.startDate}
+              max={form.endDate || undefined} onChange={handleChange} />
           </div>
           <div className="field">
             <label>End date</label>
-            <input name="endDate" type="date" value={form.endDate} onChange={handleChange} />
+            <input name="endDate" type="date" value={form.endDate}
+              min={form.startDate || undefined} onChange={handleChange} />
           </div>
           <div className="field">
             <label>Members (comma-separated)</label>

@@ -23,16 +23,36 @@ router.get('/:tripId', auth, tripAccess, (req, res) => {
 });
 
 // POST /api/trips
+// POST /api/trips
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, destination, dates, members } = req.body;
+    const { name, destination, startDate, endDate, members } = req.body;
     if (!name || !destination)
       return res.status(400).json({ message: 'Name and destination are required' });
+
+    let dates = 'Dates TBD';
+    if (startDate || endDate) {
+      if (!startDate || !endDate)
+        return res.status(400).json({ message: 'Enter both a start date and an end date, or leave both empty' });
+
+      const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+      if (!isoDate.test(startDate) || !isoDate.test(endDate))
+        return res.status(400).json({ message: 'Dates must be valid calendar dates' });
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime()))
+        return res.status(400).json({ message: 'Dates must be valid calendar dates' });
+      if (end < start)
+        return res.status(400).json({ message: 'End date cannot be before the start date' });
+
+      dates = `${startDate} to ${endDate}`;
+    }
 
     const trip = await Trip.create({
       name,
       destination,
-      dates: dates || 'Dates TBD',
+      dates,
       members: members && members.length ? members : ['You'],
       createdBy: req.userId,
     });
